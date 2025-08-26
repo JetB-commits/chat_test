@@ -60,7 +60,7 @@ function AzureChat() {
 
     try {
       const response = await fetch(
-        'https://jetb-agent-server-281983614239.asia-northeast1.run.app/azure_agent/',
+        'http://localhost:8001/azure_agent/',
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
