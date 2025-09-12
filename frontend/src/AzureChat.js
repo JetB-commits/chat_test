@@ -51,7 +51,9 @@ function AzureChat() {
       text: '',
       isLoading: true,
       source: null,
-      source_id: null
+      source_id: null,
+      source_title: null,
+      chatId: null
     };
     setMessages((prev) => [...prev, placeholderMessage]);
 
@@ -60,7 +62,7 @@ function AzureChat() {
 
     try {
       const response = await fetch(
-        'http://localhost:8001/azure_agent/',
+        'https://jetb-agent-server-281983614239.asia-northeast1.run.app/test_agent/',
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -71,6 +73,7 @@ function AzureChat() {
         }
       );
 
+
       if (!response.ok) {
         const errorBody = await response.text();
         throw new Error(`HTTP error! status: ${response.status}, body: ${errorBody}`);
@@ -79,6 +82,8 @@ function AzureChat() {
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let buffer = '';
+      let fullMarkdown = '';
+      let fullLogged = false;
 
       while (true) {
         const { done, value } = await reader.read();
@@ -110,6 +115,7 @@ function AzureChat() {
                     m.id === botMessageId ? { ...m, text: m.text + parsed.content } : m
                   )
                 );
+                fullMarkdown += parsed.content;
               }
               break;
             case 'metadata':
@@ -120,12 +126,18 @@ function AzureChat() {
                         ...m,
                         isLoading: false,
                         source: parsed.source || 'Azure OpenAI',
-                        source_id: parsed.source_id || 'azure_openai'
+                        source_id: parsed.source_id || 'azure_openai',
+                        source_title: parsed.source_title || 'Azure OpenAI',
+                        chatId: parsed.chat_id
                       }
                     : m
                 )
               );
               setLastResponseId(parsed.response_id || null);
+              if (!fullLogged) {
+                console.log('Full Markdown Response:', fullMarkdown);
+                fullLogged = true;
+              }
               break;
             case 'error':
               setMessages((prev) =>
@@ -187,7 +199,7 @@ function AzureChat() {
             </div>
             {msg.source && msg.sender === 'bot' && (
               <div className="message-source">
-                <small>Source: {msg.source} ({msg.source_id})</small>
+                <small>Source:{msg.source_title ? msg.source_title : ''} {msg.source} ({msg.source_id}){msg.chatId}</small>
               </div>
             )}
           </div>
